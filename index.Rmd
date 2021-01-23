@@ -10,7 +10,7 @@ links:
     url: "mailto:ronishen@ucsb.edu.com"
 site: distill::distill_website
 output:
-  postcards::onofre
+  postcards::jolla
 ---
  
 Here is some text!
