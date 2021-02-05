@@ -13,4 +13,6 @@ output:
   postcards::jolla
 ---
  
-Here is some text!
+I am currently working towards a doctoral degree in Technology Management at the University of California, Santa Barbara. My research interests include diversity in the tech industry, team dynamics, and social implications of future technologies.
+
+Previously, I have worked in the fields of fisheries management, veterinary medicine, business administration, and organizational development. Most recently, I managed and facilitated the expansion of a small start-up veterinary company.

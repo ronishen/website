@@ -1,0 +1,60 @@
+---
+name: Roni
+surname: Shen
+position: PhD Student
+address: University of California, Santa Barbara
+phone: +1 22 3333 4444
+email: ronishen@ucsb.edu
+github: ronishen
+linkedin: ronishen
+date: "`r format(Sys.time(), '%B %Y')`"
+output: vitae::moderncv
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(vitae)
+library(tinytex)
+```
+
+# About me
+
+I am currently pursuing my doctoral degree in Technology Management in the College of Engineering at UCSB. My research interests include the study of organizational behavior, design and innovation, team dynamics, diversity and inclusion, and the social implications of future technologies. Other areas of interest include the implications of AI driven decision-making in technological industries, costs of organizational change and disruption to innovation, and more broadly, exploring the direct and indirect effects of technology on tech-adjacent industries and job markets.
+
+# Education
+
+```{r}
+library(tibble)
+tribble(
+  ~ Degree, ~ Year, ~ Institution, ~ Where,
+  "B.S. Aquatic Biology", "2007-2011", "UC Santa Barbara", "Santa Barbara, CA",
+  "Ph.D. Technology Management", "In progress", "UC Santa Barbara", "Santa Barbara, CA"
+) %>% 
+  detailed_entries(Degree, Year, Institution, Where)
+```
+
+# Nobel Prizes
+
+```{r}
+tribble(
+  ~Year, ~Type, ~Desc,
+  1903, "Physics", "Awarded for her work on radioactivity with Pierre Curie and Henri Becquerel",
+  1911, "Chemistry", "Awarded for the discovery of radium and polonium"
+) %>% 
+  brief_entries(
+    glue::glue("Nobel Prize in {Type}"),
+    Year, 
+    Desc
+  )
+```
+
+# Publications
+
+```{r}
+library(dplyr)
+knitr::write_bib(c("vitae", "tibble"), "packages.bib")
+
+bibliography_entries("packages.bib") %>%
+  arrange(desc(author$family), issued)
+```
+

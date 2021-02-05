@@ -1,10 +1,13 @@
 ---
-title: "About this site"
+title: "Curriculum vitae"
 description: |
-  Some additional details about the website
+  A brief summary of prior work experience
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+
 ```
 
+
+Click here to view my [**CV**](CV_Shen.pdf).
