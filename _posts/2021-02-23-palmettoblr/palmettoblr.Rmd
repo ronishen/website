@@ -1,0 +1,135 @@
+---
+title: "Binary Logistic Regression: Palmetto spp"
+description: |
+  A binary logistic regression comparing two Florida palmetto species.
+author:
+  - name: Roni Shen
+date: 02-23-2021
+output:
+  distill::distill_article:
+    self_contained: false
+    code_folding: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+
+library(tidyverse)
+library(here)
+library(patchwork)
+library(broom)
+library(GGally)
+library(jtools)
+
+palmetto <- read_csv(here("_posts","2021-02-23-palmettoblr", "palmetto.csv"), 
+    col_types = cols(
+      species = col_factor(),
+      treatment = col_double(),
+      new_lvs = col_double(),
+      canopy = col_double(),
+      lf_long = col_double(),
+      comments = col_character()
+    )
+  ) %>% 
+  select(year, species, site, height, length, width, green_lvs)
+  
+levels(palmetto$species) <- c("S. repens", "S. etonia")
+
+```
+
+## Data Visualizations and Binary Logistic Regression Model of Two Florida Palmetto Species
+
+
+
+### Distributions
+
+```{r fig.cap="Figure 1. Distributions of palmetto height, canopy length, canopy width, and number of green leaves by species."}
+
+height <- ggplot(palmetto, aes(x = height)) +
+  geom_freqpoly(aes(color = species), binwidth = 10) +
+  labs(y = "Height") +
+  theme(legend.position = "none",
+        axis.title.x = element_blank())
+
+length <- ggplot(palmetto, aes(x = length)) +
+  geom_freqpoly(aes(color = species), binwidth = 10) +
+  labs(y = "Canopy Length") +
+  theme(legend.position = "none",
+        axis.title.x = element_blank())
+
+width <- ggplot(palmetto, aes(x = width)) +
+  geom_freqpoly(aes(color = species), binwidth = 10) +
+  labs(y = "Canopy Width") +
+  theme(legend.position = "none",
+        axis.title.x = element_blank())
+
+leaves <- ggplot(palmetto, aes(x = green_lvs)) +
+  geom_freqpoly(aes(color = species), binwidth = 1) +
+  labs(y = "Number of Green Leaves") +
+  theme(legend.position = "none",
+        axis.title.x = element_blank())
+
+(width | length) / (height | leaves) + 
+  plot_layout(guides = "collect") & 
+  theme(legend.position = 'right') & 
+  labs(color = "Species")
+```
+From figure 1, we can see the relative frequency distributions and variance of each of the four variables of interest between two palmetto species and their relative similarities.
+
+
+### Pairs Plots
+
+```{r fig.cap="Figure 2. Pairs plots for multivariate correlations and distributions between palmetto variables of the two species."}
+palmetto %>% 
+  select(species, height:green_lvs) %>% 
+  ggpairs(aes(color = species)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+```
+From figure 2, we can see that the two palmetto species are very similar and have significant correlations across multiple variables of measure. 
+
+
+
+### Binary logistic regression
+
+```{r}
+
+palmetto_blr <- glm(species ~ height + width + length + green_lvs, 
+                    data = palmetto,
+                    family = "binomial")
+
+# summary table
+palmetto_tidy <- tidy(palmetto_blr) %>% 
+  select(!"statistic")  
+
+knitr::kable(palmetto_tidy, col.names = c("Variable", "Coefficient", "Standard Error",
+                                          "p Value"))
+
+```
+
+
+### Model 
+
+Table 1. Incidents of correct and incorrect predictions of palmetto species based on binary logistic model of predictor variables.
+
+
+```{r, results='asis'}
+# Model fitting
+blr_fitted <- palmetto_blr %>% 
+  augment(type.predict = "response") %>% 
+  mutate(etonia = ifelse(.fitted >= .5, 1, 0),
+         repens = ifelse(.fitted < .5, 1, 0)) %>%
+  group_by(species) %>% 
+  summarise(etonia = sum(etonia, na.rm = T),
+            repens = sum(repens, na.rm = T),
+            `% correct` = ifelse(species == "S. repens", repens / n() * 100, 
+                                 etonia / n() * 100)) %>% 
+  distinct()
+
+knitr::kable(blr_fitted, col.names = c("Species", "Predicted as S. etonia", 
+                                       "Predicted as S. repens", "% Correct"))
+
+```
+
+
+
+

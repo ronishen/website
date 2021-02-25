@@ -1,0 +1,120 @@
+---
+title: "Text and Sentiment Analysis of Lyrics from Abbey Road (The Beatles)"
+description: |
+  Examples of text and sentiment analysis using R.
+author:
+  - name: Roni Shen
+date: 02-23-2021
+output:
+  distill::distill_article:
+    self_contained: false
+    code_folding: true
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tidytext)
+library(textdata)
+library(ggwordcloud)
+library(pdftools)
+library(here)
+
+```
+
+```{r}
+beatles <- pdf_text(here("_posts","2021-02-23-textanalysis","beatles.pdf"))
+
+beatles_tidy <- data.frame(beatles) %>% 
+  mutate(lyrics = str_split(beatles, pattern = '\\n')) %>% 
+  unnest(lyrics) %>% 
+  mutate(lyrics = str_trim(lyrics))
+```
+
+```{r message=FALSE, warning=FALSE}
+beatles_df <- beatles_tidy %>% 
+  mutate(song = case_when(str_detect(lyrics, "Song") ~ lyrics, 
+                          TRUE ~ NA_character_)) %>% 
+  fill(song) %>% 
+  separate(col = song, into = c(" ", "song"), sep = " ") %>% 
+  mutate(song = as.numeric(song))
+
+beatles_tokens <- beatles_df %>% 
+  unnest_tokens(word, lyrics) %>% 
+  select(-beatles) %>% 
+  anti_join(stop_words) %>% 
+  filter(!str_detect(word, "song")) %>% 
+  mutate(word = str_replace(word, "[0-9-]+", NA_character_))
+```
+
+# Word Cloud 
+## Top 5 Words by Song
+
+```{r message=FALSE, warning=FALSE}
+word_count <- beatles_tokens %>%  
+  count(song, word) %>% 
+  group_by(song) %>% 
+  arrange(-n) %>% 
+  slice(1:5)
+
+ggplot(data = word_count, aes(label = word)) +
+  geom_text_wordcloud(aes(color = n, size = n), shape = "circle") +
+  scale_size_area(max_size = 15) +
+  scale_color_gradientn(colors = c("green","purple","red")) +
+  theme_minimal()
+```
+
+
+# Sentiment Analysis 
+## By Song
+
+#### Track List:
+Track 1: Come Together
+
+Track 2: Maxwell's Silver Hammer
+
+Track 3: Something
+
+Track 4: Oh! Darling
+
+Track 5: Octopus's Garden
+
+Track 6: I Want You (She's so Heavy)
+
+Track 7: Here Comes the Sun
+
+Track 8: Because
+
+Track 9: You Never Give Me Your Money
+
+Track 10: Sun King
+
+Track 11: Mean Mr. Mustard
+
+Track 12: Polythene Pam
+
+Track 13: She Came In Through the Bathroom Window
+
+Track 14: Golden Slumbers
+
+Track 15: Carry That Weight
+
+Track 16: The End
+
+Track 17: Her Majesty
+
+
+```{r message=FALSE, warning=FALSE, fig.width=10, fig.height=7}
+beatles_nrc <- beatles_tokens %>% 
+  inner_join(get_sentiments("nrc")) %>%  
+  count(song, sentiment)
+
+ggplot(data = beatles_nrc, aes(x = sentiment, y = n, fill = sentiment)) +
+  geom_col() +
+  facet_wrap(~song) +
+  coord_flip()
+  
+```
+
+Source: The Beatles (1969). *Abbey Road*. Apple Records.

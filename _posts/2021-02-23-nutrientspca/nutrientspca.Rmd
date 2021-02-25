@@ -1,0 +1,92 @@
+---
+title: "Principal Components Analysis of Nutrient Content"
+description: |
+  Principal components analysis of nutrient contents in three types of diets.
+author:
+  - name: Roni Shen
+date: 02-23-2021
+output:
+  distill::distill_article:
+    self_contained: false
+    code_folding: true
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# load packages
+library(tidyverse)
+library(here)
+library(ggfortify)
+library(janitor)
+
+# read in dataset
+nutrients <- read_csv(here("_posts", "2021-02-23-nutrientspca", "usda_nutrients.csv"))
+```
+
+### Overview
+
+The data included in this analysis are from the USDA FoodData Central database, a public database providing expanded nutrient profile data for public use (<https://fdc.nal.usda.gov/index.html>). The dataset includes food group/categories, food types, and several measures of nutrient, vitamin, and mineral content found in specific food items. Using this data, we can explore the relationships between nutritional value found in fast foods, restaurant foods, and foods included in Native American diet using principal components analysis (PCA).
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, fig.width=10, fig.height=8}
+
+# wrangle data and create a "clean" data frame
+nutrients_clean <- nutrients %>% 
+  clean_names() %>% 
+  mutate(across(where(is.character), tolower),
+         food_group = str_replace_all(food_group, " ", "_"),
+         food_group = str_remove_all(food_group, ",")) %>% 
+  select(food_group, energy_kcal:fiber_g) %>% 
+  filter(food_group %in% c("fast_foods", 
+                           "american_indian/alaska_native_foods",
+                           "restaurant_foods")) %>% 
+  drop_na()
+
+# perform PCA with select variables
+nutrients_pca <- nutrients_clean %>% 
+  select(energy_kcal:fiber_g) %>% 
+  scale() %>% 
+  prcomp()
+
+# generate biplot with customized aesthetics
+nutrient_biplot <- autoplot(nutrients_pca,
+         data = nutrients_clean,
+         colour = "food_group",
+         shape = "food_group",
+         loadings = TRUE,
+         loadings.label = TRUE) +
+  theme_classic() +
+  scale_color_manual(values = c("american_indian/alaska_native_foods" = "deepskyblue3", 
+                                "fast_foods" = "salmon1", 
+                                "restaurant_foods" = "darkorchid"),
+                     label = c("Native American Foods", 
+                               "Fast Foods", 
+                               "Restaurant Foods")) +
+  scale_shape(label = c("Native American Foods", 
+                        "Fast Foods", 
+                        "Restaurant Foods")) +
+  labs(caption = "Figure 1. PCA biplot of 6 nutritional values for fast foods, restaurant foods, and Native American foods as reported by the USDA.",
+       shape = "Diet",
+       color = "Diet") +
+  theme(plot.caption = element_text(hjust = 0))
+
+# view biplot
+nutrient_biplot
+```
+
+### Summary
+
+From this PCA biplot, we can appreciate a few key observations:
+
+-   Approximately 65% of the variance in our data can be explained
+
+-   Protein content is negatively correlated with sugar, fiber and carbohydrate content
+
+-   Calories and fat content show a strong correlation
+
+-   There is little to no correlation between calories and fat content with sugar, fiber, carbohydrate, or protein content
+
+-   Fast foods and restaurant foods have a considerable amount of overlap while Native American foods appear to be notably different
+
+This PCA biplot shows potentially interesting comparison between the nutritional intake of Native Americans and consumers of fast foods and restaurant foods. However, these relationships require further testing to determine significance.

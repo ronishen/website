@@ -1,0 +1,50 @@
+---
+title: "Cetacean Species Richness Off the Coast of California"
+description: |
+  A map of cetacean species richness using `raster`.
+author:
+  - name: Roni Shen
+date: 02-25-2021
+output:
+  distill::distill_article:
+    self_contained: false
+    code_folding: true
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+library(tidyverse)
+library(sf)
+library(raster)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(rgdal)
+
+world <- ne_countries(scale = "medium", returnclass = "sf")
+my_files <- list.files(path = 'ca_cetaceans', full.names = TRUE)
+```
+
+# Map
+
+```{r, fig.cap="Figure 1. Cetacean species richness off the coast of California by probability of occurrence (0.7 or higher)."}
+ca_cetaceans <- raster::stack(my_files) %>%
+  raster::rasterToPoints() %>% 
+  as.data.frame() %>% 
+  pivot_longer(cols = 3:37, names_to = "species", values_to = "prob") %>% 
+  filter(prob >= .7) %>% 
+  group_by(x, y) %>% 
+  summarise(Richness = n())
+
+ggplot() +
+  geom_raster(data = ca_cetaceans, aes(x = x, y = y, fill = Richness), interpolate = T) +
+  scale_fill_viridis_c(option = "A") +
+  geom_sf(data = world, fill = "grey20") +
+  coord_sf(xlim = c(-125, -115), ylim = c(32, 38), expand = c(0, 0)) +
+  theme_void() +
+  theme(legend.position = c(0.75, 0.75),
+        legend.title = element_text(color = "white"),
+        legend.text = element_text(color = "white"))
+
+```
+

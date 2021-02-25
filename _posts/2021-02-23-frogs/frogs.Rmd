@@ -1,0 +1,97 @@
+---
+title: "Mountain Yellow-Legged Frogs in the Sierra Nevada"
+description: |
+  Visualization of Mountain yellow-legged frog populations in the Sierra Nevada.
+author:
+  - name: Roni Shen
+date: 02-23-2021
+output:
+  distill::distill_article:
+    self_contained: false
+    code_folding: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# load packages
+library(tidyverse)
+library(lubridate)
+library(here)
+library(patchwork)
+library(readxl)
+
+# read in dataset
+amphibians <- read_excel(here("_posts","2021-02-23-frogs","sierra_amphibians.xlsx"))
+```
+
+### Part 1: Creating a graph of mountain yellow-legged frog count per year by life stage
+
+```{r life stage plot, echo=TRUE, message=FALSE, warning=FALSE}
+
+# wrangle data and create a subset
+amphibians_ramu <- amphibians %>% 
+  filter(amphibian_species == "RAMU", 
+         amphibian_life_stage %in% c("Adult", "SubAdult", "Tadpole")) %>% 
+  mutate(date = ymd(survey_date),
+         survey_year = year(survey_date),
+         amphibian_life_stage = factor(amphibian_life_stage, 
+                                       levels = c("Adult", 
+                                                  "SubAdult", 
+                                                  "Tadpole"))) 
+
+# create a plot with customized aesthetics
+plot_a <- ggplot(data = amphibians_ramu, aes(x = survey_year, y = amphibian_number, 
+                                   fill = amphibian_life_stage)) +
+  geom_col(position = "stack") +
+  theme_classic() +
+  scale_fill_manual(values = c("Adult" = "deepskyblue3", 
+                                "SubAdult" = "salmon1", 
+                                "Tadpole" = "darkorchid")) +
+  scale_y_continuous(expand = c(0,0)) +
+  labs(subtitle = "Count per year by life stage", 
+       x = "Year", 
+       y = "Count", 
+       fill = "Life stage") +
+  theme(legend.position = c(.4,.7))
+```
+
+### Part 2: Creating a graph of mountain yellow-legged frog by total counts of adults and subadults observed in the 5 lakes with highest totals
+
+```{r lake plot, echo=TRUE, message=FALSE, warning=FALSE}
+
+# wrangle data from previous subset and create a new subset
+amphibians_lakes <- amphibians_ramu %>% 
+  filter(amphibian_life_stage != "Tadpole") %>% 
+  group_by(lake_id) %>% 
+  summarise(total = sum(amphibian_number)) %>% 
+  ungroup() %>% 
+  slice_max(total, n = 5) %>% 
+  mutate(lake_id = fct_inorder(as.character(lake_id)))
+
+# create a plot with customized aesthetics  
+plot_b <- ggplot(data = amphibians_lakes, aes(x = lake_id, y = total, fill = lake_id)) +
+  geom_col(show.legend = FALSE) +
+  theme_classic() +
+  scale_y_continuous(expand = c(0,0)) +
+  labs(subtitle = "Total count by top 5 lakes with highest observed counts", 
+       x = "Lake ID number",
+       y = "Total count (adults and subadults)")
+```
+
+### Part 3: Combining plots for mountain yellow-legged frogs with yearly totals for 3 life stages (part 1) and total counts for adults and subadults in the 5 lakes with highest observed counts (part 2)
+
+```{r combined plot, echo=TRUE, message=FALSE, warning=FALSE, fig.width=10}
+
+# combine 2 plots with {patchwork} and customized aesthetics
+combined_plot <- (plot_a | plot_b) +
+  plot_layout(widths = c(1,1)) +
+  plot_annotation(title = "Mountain yellow-legged frog populations in the Sierra Nevada",
+                  caption = "Figure 1. Mountain yellow-legged frogs totals across 3 life stages (left) and total counts for adults and subadults in the 5 lakes with highest observed counts (right).") &
+  theme(plot.caption = element_text(hjust = 0, size = 10),
+        plot.title = element_text(hjust = .25, size = 18))
+
+# view combined plot
+combined_plot
+```
+

@@ -1,0 +1,52 @@
+---
+title: "Plastics Collection"
+description: |
+  A visualization of plastics collected annually.
+author:
+  - name: Roni Shen
+date: 02-23-2021
+output:
+  distill::distill_article:
+    self_contained: false
+    code_folding: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(RColorBrewer)
+
+plastics <- readr::read_csv(
+  'https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-01-26/plastics.csv') %>% 
+  tidyr::pivot_longer(
+    cols = c(hdpe, ldpe, o, pet, pp, ps, pvc, grand_total), 
+    names_to = "type", 
+    values_to = "count") %>% 
+  filter(type != "grand_total") %>% 
+  arrange(desc(count)) %>% 
+  mutate(type = fct_inorder(type))
+
+events <- readr::read_csv(
+  'https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-01-26/plastics.csv') %>%
+  dplyr::distinct(year, country, num_events, volunteers) %>%
+  dplyr::group_by(year) %>%
+  summarise(total_events = sum(num_events),
+            total_volunteers = sum(volunteers, na.rm = T)) 
+
+```
+
+```{r}
+
+ggplot() +
+  geom_col(data = plastics, aes(x = year, y = count, fill = type), position = "dodge") +
+  scale_x_continuous(breaks = 2019:2020) +
+  labs(title = "Amount of plastic by type per year",
+       x = "Year", y = "Total Count") +
+  scale_fill_brewer(palette="RdBu") +
+  geom_text(data = events, aes(x = year, y = 50000, 
+                               label = paste('Volunteers =', total_volunteers, 
+                                             '\nEvents =', total_events)))
+
+```
+

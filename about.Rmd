@@ -1,7 +1,7 @@
 ---
 title: "Curriculum vitae"
 description: |
-  A brief summary of prior work experience
+  A brief summary of current research and prior work experience
 ---
 
 ```{r setup, include=FALSE}
@@ -10,4 +10,6 @@ knitr::opts_chunk$set(echo = FALSE)
 ```
 
 
-Click here to view my [**CV**](CV_Shen.pdf).
+```{r, echo=FALSE, message=FALSE, fig.align='center', fig.pos='H', out.width="1200px", out.height="1600px"}
+knitr::include_graphics("./images/CV_Shen.pdf")
+```

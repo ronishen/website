@@ -1,1 +1,121 @@
-[]
+[
+  {
+    "path": "posts/2021-02-25-cetaceans/",
+    "title": "Cetacean Species Richness Off the Coast of California",
+    "description": "A map of cetacean species richness using `raster`.",
+    "author": [
+      {
+        "name": "Roni Shen",
+        "url": {}
+      }
+    ],
+    "date": "2021-02-25",
+    "categories": [],
+    "contents": "\r\nMap\r\n\r\n\r\nShow code\r\n\r\nca_cetaceans <- raster::stack(my_files) %>%\r\n  raster::rasterToPoints() %>% \r\n  as.data.frame() %>% \r\n  pivot_longer(cols = 3:37, names_to = \"species\", values_to = \"prob\") %>% \r\n  filter(prob >= .7) %>% \r\n  group_by(x, y) %>% \r\n  summarise(Richness = n())\r\n\r\nggplot() +\r\n  geom_raster(data = ca_cetaceans, aes(x = x, y = y, fill = Richness), interpolate = T) +\r\n  scale_fill_viridis_c(option = \"A\") +\r\n  geom_sf(data = world, fill = \"grey20\") +\r\n  coord_sf(xlim = c(-125, -115), ylim = c(32, 38), expand = c(0, 0)) +\r\n  theme_void() +\r\n  theme(legend.position = c(0.75, 0.75),\r\n        legend.title = element_text(color = \"white\"),\r\n        legend.text = element_text(color = \"white\"))\r\n\r\n\r\n\r\n\r\nFigure 1: Figure 1. Cetacean species richness off the coast of California by probability of occurrence (0.7 or higher).\r\n\r\n\r\n\r\n\r\n\r\n\r\n",
+    "preview": "posts/2021-02-25-cetaceans/cetaceans_files/figure-html5/unnamed-chunk-1-1.png",
+    "last_modified": "2021-02-25T12:26:29-08:00",
+    "input_file": {}
+  },
+  {
+    "path": "posts/2021-01-23-welcome/",
+    "title": "Hello World!",
+    "description": {},
+    "author": [
+      {
+        "name": "Roni Shen",
+        "url": {}
+      }
+    ],
+    "date": "2021-02-23",
+    "categories": [],
+    "contents": "\r\nHere is a blog post. Have a great day!\r\n\r\n\r\n\r\n",
+    "preview": {},
+    "last_modified": "2021-02-23T12:52:12-08:00",
+    "input_file": {}
+  },
+  {
+    "path": "posts/2021-02-23-frogs/",
+    "title": "Mountain Yellow-Legged Frogs in the Sierra Nevada",
+    "description": "Visualization of Mountain yellow-legged frog populations in the Sierra Nevada.",
+    "author": [
+      {
+        "name": "Roni Shen",
+        "url": {}
+      }
+    ],
+    "date": "2021-02-23",
+    "categories": [],
+    "contents": "\r\nPart 1: Creating a graph of mountain yellow-legged frog count per year by life stage\r\n\r\n\r\nShow code\r\n\r\n# wrangle data and create a subset\r\namphibians_ramu <- amphibians %>% \r\n  filter(amphibian_species == \"RAMU\", \r\n         amphibian_life_stage %in% c(\"Adult\", \"SubAdult\", \"Tadpole\")) %>% \r\n  mutate(date = ymd(survey_date),\r\n         survey_year = year(survey_date),\r\n         amphibian_life_stage = factor(amphibian_life_stage, \r\n                                       levels = c(\"Adult\", \r\n                                                  \"SubAdult\", \r\n                                                  \"Tadpole\"))) \r\n\r\n# create a plot with customized aesthetics\r\nplot_a <- ggplot(data = amphibians_ramu, aes(x = survey_year, y = amphibian_number, \r\n                                   fill = amphibian_life_stage)) +\r\n  geom_col(position = \"stack\") +\r\n  theme_classic() +\r\n  scale_fill_manual(values = c(\"Adult\" = \"deepskyblue3\", \r\n                                \"SubAdult\" = \"salmon1\", \r\n                                \"Tadpole\" = \"darkorchid\")) +\r\n  scale_y_continuous(expand = c(0,0)) +\r\n  labs(subtitle = \"Count per year by life stage\", \r\n       x = \"Year\", \r\n       y = \"Count\", \r\n       fill = \"Life stage\") +\r\n  theme(legend.position = c(.4,.7))\r\n\r\n\r\n\r\nPart 2: Creating a graph of mountain yellow-legged frog by total counts of adults and subadults observed in the 5 lakes with highest totals\r\n\r\n\r\nShow code\r\n\r\n# wrangle data from previous subset and create a new subset\r\namphibians_lakes <- amphibians_ramu %>% \r\n  filter(amphibian_life_stage != \"Tadpole\") %>% \r\n  group_by(lake_id) %>% \r\n  summarise(total = sum(amphibian_number)) %>% \r\n  ungroup() %>% \r\n  slice_max(total, n = 5) %>% \r\n  mutate(lake_id = fct_inorder(as.character(lake_id)))\r\n\r\n# create a plot with customized aesthetics  \r\nplot_b <- ggplot(data = amphibians_lakes, aes(x = lake_id, y = total, fill = lake_id)) +\r\n  geom_col(show.legend = FALSE) +\r\n  theme_classic() +\r\n  scale_y_continuous(expand = c(0,0)) +\r\n  labs(subtitle = \"Total count by top 5 lakes with highest observed counts\", \r\n       x = \"Lake ID number\",\r\n       y = \"Total count (adults and subadults)\")\r\n\r\n\r\n\r\nPart 3: Combining plots for mountain yellow-legged frogs with yearly totals for 3 life stages (part 1) and total counts for adults and subadults in the 5 lakes with highest observed counts (part 2)\r\n\r\n\r\nShow code\r\n\r\n# combine 2 plots with {patchwork} and customized aesthetics\r\ncombined_plot <- (plot_a | plot_b) +\r\n  plot_layout(widths = c(1,1)) +\r\n  plot_annotation(title = \"Mountain yellow-legged frog populations in the Sierra Nevada\",\r\n                  caption = \"Figure 1. Mountain yellow-legged frogs totals across 3 life stages (left) and total counts for adults and subadults in the 5 lakes with highest observed counts (right).\") &\r\n  theme(plot.caption = element_text(hjust = 0, size = 10),\r\n        plot.title = element_text(hjust = .25, size = 18))\r\n\r\n# view combined plot\r\ncombined_plot\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n",
+    "preview": {},
+    "last_modified": "2021-02-23T13:13:19-08:00",
+    "input_file": {}
+  },
+  {
+    "path": "posts/2021-02-23-nutrientspca/",
+    "title": "Principal Components Analysis of Nutrient Content",
+    "description": "Principal components analysis of nutrient contents in three types of diets.",
+    "author": [
+      {
+        "name": "Roni Shen",
+        "url": {}
+      }
+    ],
+    "date": "2021-02-23",
+    "categories": [],
+    "contents": "\r\nOverview\r\nThe data included in this analysis are from the USDA FoodData Central database, a public database providing expanded nutrient profile data for public use (https://fdc.nal.usda.gov/index.html). The dataset includes food group/categories, food types, and several measures of nutrient, vitamin, and mineral content found in specific food items. Using this data, we can explore the relationships between nutritional value found in fast foods, restaurant foods, and foods included in Native American diet using principal components analysis (PCA).\r\n\r\n\r\nShow code\r\n\r\n# wrangle data and create a \"clean\" data frame\r\nnutrients_clean <- nutrients %>% \r\n  clean_names() %>% \r\n  mutate(across(where(is.character), tolower),\r\n         food_group = str_replace_all(food_group, \" \", \"_\"),\r\n         food_group = str_remove_all(food_group, \",\")) %>% \r\n  select(food_group, energy_kcal:fiber_g) %>% \r\n  filter(food_group %in% c(\"fast_foods\", \r\n                           \"american_indian/alaska_native_foods\",\r\n                           \"restaurant_foods\")) %>% \r\n  drop_na()\r\n\r\n# perform PCA with select variables\r\nnutrients_pca <- nutrients_clean %>% \r\n  select(energy_kcal:fiber_g) %>% \r\n  scale() %>% \r\n  prcomp()\r\n\r\n# generate biplot with customized aesthetics\r\nnutrient_biplot <- autoplot(nutrients_pca,\r\n         data = nutrients_clean,\r\n         colour = \"food_group\",\r\n         shape = \"food_group\",\r\n         loadings = TRUE,\r\n         loadings.label = TRUE) +\r\n  theme_classic() +\r\n  scale_color_manual(values = c(\"american_indian/alaska_native_foods\" = \"deepskyblue3\", \r\n                                \"fast_foods\" = \"salmon1\", \r\n                                \"restaurant_foods\" = \"darkorchid\"),\r\n                     label = c(\"Native American Foods\", \r\n                               \"Fast Foods\", \r\n                               \"Restaurant Foods\")) +\r\n  scale_shape(label = c(\"Native American Foods\", \r\n                        \"Fast Foods\", \r\n                        \"Restaurant Foods\")) +\r\n  labs(caption = \"Figure 1. PCA biplot of 6 nutritional values for fast foods, restaurant foods, and Native American foods as reported by the USDA.\",\r\n       shape = \"Diet\",\r\n       color = \"Diet\") +\r\n  theme(plot.caption = element_text(hjust = 0))\r\n\r\n# view biplot\r\nnutrient_biplot\r\n\r\n\r\n\r\n\r\nSummary\r\nFrom this PCA biplot, we can appreciate a few key observations:\r\nApproximately 65% of the variance in our data can be explained\r\nProtein content is negatively correlated with sugar, fiber and carbohydrate content\r\nCalories and fat content show a strong correlation\r\nThere is little to no correlation between calories and fat content with sugar, fiber, carbohydrate, or protein content\r\nFast foods and restaurant foods have a considerable amount of overlap while Native American foods appear to be notably different\r\nThis PCA biplot shows potentially interesting comparison between the nutritional intake of Native Americans and consumers of fast foods and restaurant foods. However, these relationships require further testing to determine significance.\r\n\r\n\r\n\r\n",
+    "preview": "posts/2021-02-23-nutrientspca/nutrientspca_files/figure-html5/unnamed-chunk-1-1.png",
+    "last_modified": "2021-02-23T13:16:06-08:00",
+    "input_file": {}
+  },
+  {
+    "path": "posts/2021-02-23-palmettoblr/",
+    "title": "Binary Logistic Regression: Palmetto spp",
+    "description": "A binary logistic regression comparing two Florida palmetto species.",
+    "author": [
+      {
+        "name": "Roni Shen",
+        "url": {}
+      }
+    ],
+    "date": "2021-02-23",
+    "categories": [],
+    "contents": "\r\nData Visualizations and Binary Logistic Regression Model of Two Florida Palmetto Species\r\nDistributions\r\n\r\n\r\nShow code\r\n\r\nheight <- ggplot(palmetto, aes(x = height)) +\r\n  geom_freqpoly(aes(color = species), binwidth = 10) +\r\n  labs(y = \"Height\") +\r\n  theme(legend.position = \"none\",\r\n        axis.title.x = element_blank())\r\n\r\nlength <- ggplot(palmetto, aes(x = length)) +\r\n  geom_freqpoly(aes(color = species), binwidth = 10) +\r\n  labs(y = \"Canopy Length\") +\r\n  theme(legend.position = \"none\",\r\n        axis.title.x = element_blank())\r\n\r\nwidth <- ggplot(palmetto, aes(x = width)) +\r\n  geom_freqpoly(aes(color = species), binwidth = 10) +\r\n  labs(y = \"Canopy Width\") +\r\n  theme(legend.position = \"none\",\r\n        axis.title.x = element_blank())\r\n\r\nleaves <- ggplot(palmetto, aes(x = green_lvs)) +\r\n  geom_freqpoly(aes(color = species), binwidth = 1) +\r\n  labs(y = \"Number of Green Leaves\") +\r\n  theme(legend.position = \"none\",\r\n        axis.title.x = element_blank())\r\n\r\n(width | length) / (height | leaves) + \r\n  plot_layout(guides = \"collect\") & \r\n  theme(legend.position = 'right') & \r\n  labs(color = \"Species\")\r\n\r\n\r\n\r\n\r\nFigure 1: Figure 1. Distributions of palmetto height, canopy length, canopy width, and number of green leaves by species.\r\n\r\n\r\n\r\nFrom figure 1, we can see the relative frequency distributions and variance of each of the four variables of interest between two palmetto species and their relative similarities.\r\nPairs Plots\r\n\r\n\r\nShow code\r\n\r\npalmetto %>% \r\n  select(species, height:green_lvs) %>% \r\n  ggpairs(aes(color = species)) +\r\n  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))\r\n\r\n\r\n\r\n\r\nFigure 2: Figure 2. Pairs plots for multivariate correlations and distributions between palmetto variables of the two species.\r\n\r\n\r\n\r\nFrom figure 2, we can see that the two palmetto species are very similar and have significant correlations across multiple variables of measure.\r\nBinary logistic regression\r\n\r\n\r\nShow code\r\n\r\npalmetto_blr <- glm(species ~ height + width + length + green_lvs, \r\n                    data = palmetto,\r\n                    family = \"binomial\")\r\n\r\n# summary table\r\npalmetto_tidy <- tidy(palmetto_blr) %>% \r\n  select(!\"statistic\")  \r\n\r\nknitr::kable(palmetto_tidy, col.names = c(\"Variable\", \"Coefficient\", \"Standard Error\",\r\n                                          \"p Value\"))\r\n\r\n\r\nVariable\r\nCoefficient\r\nStandard Error\r\np Value\r\n(Intercept)\r\n3.2266851\r\n0.1420708\r\n0\r\nheight\r\n-0.0292173\r\n0.0023061\r\n0\r\nwidth\r\n0.0394434\r\n0.0021000\r\n0\r\nlength\r\n0.0458233\r\n0.0018661\r\n0\r\ngreen_lvs\r\n-1.9084747\r\n0.0388634\r\n0\r\n\r\nModel\r\nTable 1. Incidents of correct and incorrect predictions of palmetto species based on binary logistic model of predictor variables.\r\n\r\n\r\nShow code\r\n\r\n# Model fitting\r\nblr_fitted <- palmetto_blr %>% \r\n  augment(type.predict = \"response\") %>% \r\n  mutate(etonia = ifelse(.fitted >= .5, 1, 0),\r\n         repens = ifelse(.fitted < .5, 1, 0)) %>%\r\n  group_by(species) %>% \r\n  summarise(etonia = sum(etonia, na.rm = T),\r\n            repens = sum(repens, na.rm = T),\r\n            `% correct` = ifelse(species == \"S. repens\", repens / n() * 100, \r\n                                 etonia / n() * 100)) %>% \r\n  distinct()\r\n\r\nknitr::kable(blr_fitted, col.names = c(\"Species\", \"Predicted as S. etonia\", \r\n                                       \"Predicted as S. repens\", \"% Correct\"))\r\n\r\n\r\nSpecies\r\nPredicted as S. etonia\r\nPredicted as S. repens\r\n% Correct\r\nS. repens\r\n564\r\n5548\r\n90.77225\r\nS. etonia\r\n5701\r\n454\r\n92.62388\r\n\r\n\r\n\r\n\r\n",
+    "preview": "posts/2021-02-23-palmettoblr/palmettoblr_files/figure-html5/unnamed-chunk-1-1.png",
+    "last_modified": "2021-02-23T13:05:45-08:00",
+    "input_file": {}
+  },
+  {
+    "path": "posts/2021-02-23-plastics/",
+    "title": "Plastics Collection",
+    "description": "A visualization of plastics collected annually.",
+    "author": [
+      {
+        "name": "Roni Shen",
+        "url": {}
+      }
+    ],
+    "date": "2021-02-23",
+    "categories": [],
+    "contents": "\r\n\r\n\r\nShow code\r\n\r\nggplot() +\r\n  geom_col(data = plastics, aes(x = year, y = count, fill = type), position = \"dodge\") +\r\n  scale_x_continuous(breaks = 2019:2020) +\r\n  labs(title = \"Amount of plastic by type per year\",\r\n       x = \"Year\", y = \"Total Count\") +\r\n  scale_fill_brewer(palette=\"RdBu\") +\r\n  geom_text(data = events, aes(x = year, y = 50000, \r\n                               label = paste('Volunteers =', total_volunteers, \r\n                                             '\\nEvents =', total_events)))\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n",
+    "preview": "posts/2021-02-23-plastics/plastics_files/figure-html5/unnamed-chunk-1-1.png",
+    "last_modified": "2021-02-23T13:09:35-08:00",
+    "input_file": {}
+  },
+  {
+    "path": "posts/2021-02-23-textanalysis/",
+    "title": "Text and Sentiment Analysis of Lyrics from Abbey Road (The Beatles)",
+    "description": "Examples of text and sentiment analysis using R.",
+    "author": [
+      {
+        "name": "Roni Shen",
+        "url": {}
+      }
+    ],
+    "date": "2021-02-23",
+    "categories": [],
+    "contents": "\r\n\r\n\r\nShow code\r\n\r\nbeatles <- pdf_text(here(\"_posts\",\"2021-02-23-textanalysis\",\"beatles.pdf\"))\r\n\r\nbeatles_tidy <- data.frame(beatles) %>% \r\n  mutate(lyrics = str_split(beatles, pattern = '\\\\n')) %>% \r\n  unnest(lyrics) %>% \r\n  mutate(lyrics = str_trim(lyrics))\r\n\r\n\r\n\r\n\r\n\r\nShow code\r\n\r\nbeatles_df <- beatles_tidy %>% \r\n  mutate(song = case_when(str_detect(lyrics, \"Song\") ~ lyrics, \r\n                          TRUE ~ NA_character_)) %>% \r\n  fill(song) %>% \r\n  separate(col = song, into = c(\" \", \"song\"), sep = \" \") %>% \r\n  mutate(song = as.numeric(song))\r\n\r\nbeatles_tokens <- beatles_df %>% \r\n  unnest_tokens(word, lyrics) %>% \r\n  select(-beatles) %>% \r\n  anti_join(stop_words) %>% \r\n  filter(!str_detect(word, \"song\")) %>% \r\n  mutate(word = str_replace(word, \"[0-9-]+\", NA_character_))\r\n\r\n\r\n\r\nWord Cloud\r\nTop 5 Words by Song\r\n\r\n\r\nShow code\r\n\r\nword_count <- beatles_tokens %>%  \r\n  count(song, word) %>% \r\n  group_by(song) %>% \r\n  arrange(-n) %>% \r\n  slice(1:5)\r\n\r\nggplot(data = word_count, aes(label = word)) +\r\n  geom_text_wordcloud(aes(color = n, size = n), shape = \"circle\") +\r\n  scale_size_area(max_size = 15) +\r\n  scale_color_gradientn(colors = c(\"green\",\"purple\",\"red\")) +\r\n  theme_minimal()\r\n\r\n\r\n\r\n\r\nSentiment Analysis\r\nBy Song\r\nTrack List:\r\nTrack 1: Come Together\r\nTrack 2: Maxwell’s Silver Hammer\r\nTrack 3: Something\r\nTrack 4: Oh! Darling\r\nTrack 5: Octopus’s Garden\r\nTrack 6: I Want You (She’s so Heavy)\r\nTrack 7: Here Comes the Sun\r\nTrack 8: Because\r\nTrack 9: You Never Give Me Your Money\r\nTrack 10: Sun King\r\nTrack 11: Mean Mr. Mustard\r\nTrack 12: Polythene Pam\r\nTrack 13: She Came In Through the Bathroom Window\r\nTrack 14: Golden Slumbers\r\nTrack 15: Carry That Weight\r\nTrack 16: The End\r\nTrack 17: Her Majesty\r\n\r\n\r\nShow code\r\n\r\nbeatles_nrc <- beatles_tokens %>% \r\n  inner_join(get_sentiments(\"nrc\")) %>%  \r\n  count(song, sentiment)\r\n\r\nggplot(data = beatles_nrc, aes(x = sentiment, y = n, fill = sentiment)) +\r\n  geom_col() +\r\n  facet_wrap(~song) +\r\n  coord_flip()\r\n\r\n\r\n\r\n\r\nSource: The Beatles (1969). Abbey Road. Apple Records.\r\n\r\n\r\n\r\n",
+    "preview": "posts/2021-02-23-textanalysis/textanalysis_files/figure-html5/unnamed-chunk-3-1.png",
+    "last_modified": "2021-02-23T13:07:22-08:00",
+    "input_file": {}
+  }
+]
